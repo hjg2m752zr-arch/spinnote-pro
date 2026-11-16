@@ -304,6 +304,16 @@
 
     function mergeCloud(incoming){
       validate(incoming);
+      // Never silently merge different IDs with the same wheel name: it can multiply wheels across phones.
+      const remoteIds=new Set(incoming.wheels.map(w=>w.id));
+      const localIds=new Set(state.wheels.map(w=>w.id));
+      const normalizeName=name=>name.trim().normalize('NFKC').toLocaleLowerCase();
+      const remoteNames=new Set(incoming.wheels.filter(w=>!localIds.has(w.id)).map(w=>normalizeName(w.name)));
+      if(state.wheels.some(w=>!remoteIds.has(w.id)&&remoteNames.has(normalizeName(w.name)))){
+        cloudConflict=true;
+        cloudLabel('发现同名轮盘冲突 · 已停止自动合并');
+        throw Error('两台手机存在不同 ID 的同名轮盘。为保护已有选项与记录，已停止合并，请先导出 JSON 备份。');
+      }
       const deleted=new Set([...(incoming.deletedWheelIds||[]),...(state.deletedWheelIds||[])]);
       const wheels=new Map(incoming.wheels.filter(w=>!deleted.has(w.id)).map(w=>[w.id,w]));
       for(const w of state.wheels){if(deleted.has(w.id))continue;let prev=wheels.get(w.id);if(!prev||Date.parse(w.updatedAt||0)>Date.parse(prev.updatedAt||0))wheels.set(w.id,w)}
@@ -315,7 +325,7 @@
       save();render();
     }
     async function pullCloud(silent=false){
-      if(cloudBusy||spinning||!cloudSession)return;
+      if(cloudBusy||spinning||!cloudSession||cloudConflict)return;
       cloudBusy=true;
       try{
         const remote=await getCloudRow();
@@ -331,7 +341,7 @@
       if(localDirty)scheduleCloud();
     }
     async function pushCloud(initial=false){
-      if(cloudBusy||!cloudSession||spinning)return;
+      if(cloudBusy||!cloudSession||spinning||cloudConflict)return;
       cloudBusy=true;
       try{
         let remote=await getCloudRow();
@@ -360,7 +370,7 @@
     function startCloudPoll(){
       clearInterval(cloudPoll);
       cloudPoll=setInterval(async()=>{
-        if(!cloudSession||document.hidden||cloudBusy||spinning)return;
+        if(!cloudSession||document.hidden||cloudBusy||spinning||cloudConflict)return;
         if(localDirty)await pushCloud();
         else await pullCloud(true);
       },10000);
