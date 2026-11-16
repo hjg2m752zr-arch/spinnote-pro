@@ -128,7 +128,8 @@
   <script>
   (() => {
     'use strict';
-    const KEY='spinnote_data_v1', DB='spinnote_db_v1', MAX_WHEELS=100, MAX_ITEMS=200;
+    const KEY='spinnote_data_fresh_v2', DB='spinnote_db_fresh_v2', MAX_WHEELS=100, MAX_ITEMS=200;
+    const DATASET='spinnote-fresh-20261117-v2';
     const colors=['#8875ed','#f3a0aa','#70c6c3','#f6c879','#7ca7eb','#b8a1ee','#f29d75','#8ccda8','#dea4cd','#9ca4ed','#f1be75','#99bfd4'];
     const $=id=>document.getElementById(id);
     let state, db=null, storageFault=false, spinning=false, angle=0, drawId=null, initDone=false, editSerial=0;
@@ -137,7 +138,7 @@
     const now=()=>new Date().toISOString();
     function uid(){return (globalThis.crypto && crypto.randomUUID)?crypto.randomUUID():('id-'+Date.now()+'-'+Math.random().toString(36).slice(2))}
     function newWheel(name,items=[]){let time=now();return {id:uid(),name,items:items.map(text=>({id:uid(),text})),createdAt:time,updatedAt:time}}
-    function initialState(){return {schemaVersion:1,createdAt:now(),updatedAt:now(),activeWheelId:null,wheels:[],draws:[],deletedWheelIds:[]}}
+    function initialState(){return {schemaVersion:1,createdAt:now(),updatedAt:now(),activeWheelId:null,wheels:[],draws:[],deletedWheelIds:[],datasetId:DATASET}}
     function validString(s,max){return typeof s==='string' && s.trim().length>0 && s.trim().length<=max}
     function validate(data){
       if(!data || data.schemaVersion!==1 || !Array.isArray(data.wheels) || !Array.isArray(data.draws) || data.wheels.length>1000 || data.draws.length>300000) throw new Error('备份文件结构不正确或文件过大');
@@ -293,7 +294,7 @@
         setCloudSession(data);cloudRevision=null;cloudConflict=false;cloudLabel('已连接',false);
         // Do not silently overwrite an existing cloud snapshot after login.
         const remote=await getCloudRow();
-        if(remote){mergeCloud(remote.data);cloudRevision=remote.revision;cloudConflict=false;cloudLabel('已连接 · 正在合并',false);localDirty=true;scheduleCloud()}
+        if(remote){if(remote.data?.datasetId===DATASET)mergeCloud(remote.data);cloudRevision=remote.revision;cloudConflict=false;cloudLabel('已连接 · 正在同步全新数据',false);localDirty=true;scheduleCloud()}
         else{localDirty=true;scheduleCloud()}
       }catch(e){cloudLabel('连接失败');notify(e.message)}finally{cloudBusy=false;$('cloudPassword').value=''}
     }
@@ -304,6 +305,7 @@
 
     function mergeCloud(incoming){
       validate(incoming);
+      if(incoming.datasetId!==DATASET){cloudLabel('旧云端数据已隔离 · 正在初始化全新数据',false);return;}
       // Never silently merge different IDs with the same wheel name: it can multiply wheels across phones.
       const remoteIds=new Set(incoming.wheels.map(w=>w.id));
       const localIds=new Set(state.wheels.map(w=>w.id));
@@ -331,6 +333,7 @@
         const remote=await getCloudRow();
         if(!remote){cloudRevision=null;if(!silent)notify('云端暂无数据');return}
         if(remote.revision===cloudRevision)return;
+        if(remote.data?.datasetId!==DATASET){cloudRevision=remote.revision;localDirty=true;cloudLabel('旧云端数据已隔离 · 正在重置',false);return;}
         if(!silent&&!confirm('将云端数据合并到本机？本机未上传的内容会保留。'))return;
         mergeCloud(remote.data);cloudRevision=remote.revision;cloudConflict=false;
         cloudLabel('已获取另一台手机的数据',false);
@@ -346,7 +349,8 @@
       try{
         let remote=await getCloudRow();
         if(remote&&remote.revision!==cloudRevision){
-          mergeCloud(remote.data);cloudRevision=remote.revision;
+          if(remote.data?.datasetId===DATASET)mergeCloud(remote.data);
+          cloudRevision=remote.revision;
         }
         if(!remote&&cloudRevision!==null){cloudRevision=null}
         const revision=uid(),payload=JSON.parse(JSON.stringify(state)),sentSerial=editSerial;
@@ -402,6 +406,7 @@
       try{db=await openDatabase();remote=await readDb()}catch(err){console.warn('IndexedDB not available',err)}
       // Prefer whichever copy has the latest local timestamp; both are kept for redundancy.
       state=remote&&(!local||Date.parse(remote.updatedAt)>=Date.parse(local.updatedAt))?remote:(local||initialState());
+      if(state.datasetId!==DATASET)state=initialState();
       if(!currentWheel())state.activeWheelId=state.wheels[0]?.id||null;
       state.deletedWheelIds=state.deletedWheelIds||[];initDone=true;render();save();if(cloudSession){cloudRevision=null;cloudLabel('正在恢复云端连接…',false);pullCloud(true);}if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('./service-worker.js').catch(err=>console.warn('Offline cache unavailable',err));
     }
