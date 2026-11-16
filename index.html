@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f7f8fc">
+  <meta name="description" content="公平随机的多轮盘选择器，永久保留历史、每天汇总、打印与备份。">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="轮盘记录">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icon-192.png">
+  <title>SpinNote · 随机轮盘与每日记录</title>
+  <style>
+    :root{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;color:#24263f;background:#f4f3fa;font-synthesis:none;--ink:#24263f;--muted:#777d96;--stroke:#e8eaf3;--violet:#6753e8;--violet-dark:#4e39ca;--surface:#fff;--shadow:0 12px 40px rgba(40,46,94,.055)}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh}button,input,textarea{font:inherit}button{cursor:pointer}button:disabled{opacity:.48;cursor:not-allowed}button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid #c1b9fb;outline-offset:2px}a{color:#5541bb} .container{max-width:1536px;margin:auto;padding:25px 28px 60px}
+    .topbar{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:24px}.brand{display:flex;align-items:center;gap:12px}.brand-icon{display:grid;place-items:center;width:48px;height:48px;border-radius:15px;background:linear-gradient(135deg,#5142d9,#a991ff);box-shadow:0 7px 16px #6157d133;color:white;font-size:28px;transform:rotate(-3deg)}h1{font-size:22px;line-height:1.25;margin:0;letter-spacing:-.45px}.subtitle{margin:5px 0 0;color:var(--muted);font-size:13px}.top-actions{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+    .btn{border:1px solid var(--stroke);border-radius:11px;background:#fff;color:#3b3e5b;padding:10px 14px;font-weight:650;font-size:13px;min-height:41px;transition:background .15s,transform .15s}.btn:hover:not(:disabled){background:#f6f5ff}.btn:active:not(:disabled){transform:scale(.98)}.btn-primary{background:var(--violet);color:#fff;border-color:var(--violet)}.btn-primary:hover:not(:disabled){background:var(--violet-dark)}.btn-danger{color:#c44b59}.btn-subtle{border:0;background:transparent;padding:8px 10px}.btn-icon{width:34px;height:34px;min-height:34px;padding:0;display:inline-grid;place-items:center}.status{color:#547b66;background:#eaf6ef;padding:7px 10px;border-radius:100px;font-size:12px;font-weight:650}.status.warn{color:#a65d25;background:#fff0df}.hint{font-size:12px;line-height:1.65;color:var(--muted)}
+    .workspace{display:grid;grid-template-columns:232px minmax(355px,1fr) 326px;gap:18px;align-items:stretch}.panel{border:1px solid var(--stroke);border-radius:24px;background:var(--surface);box-shadow:0 12px 45px rgba(41,33,95,.065);min-width:0}.left{padding:20px 12px;min-height:548px}.panel-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 7px 14px}.panel-title{font-size:15px;font-weight:760;letter-spacing:-.15px}.minor{font-size:12px;color:var(--muted);font-weight:500}.wheel-menu{display:flex;flex-direction:column;gap:6px}.wheel-item{border:1px solid transparent;border-radius:11px;background:transparent;text-align:left;padding:12px;display:flex;align-items:center;justify-content:space-between;gap:6px;color:var(--ink);width:100%}.wheel-item:hover{background:#f8f7ff}.wheel-item.active{background:#f0eeff;border-color:#e3dfff;color:#5341c8}.wheel-menu-name{font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.wheel-menu-count{font-size:11px;flex-shrink:0;color:#8a8fa6}.sidebar-bottom{padding:17px 10px 2px;border-top:1px solid var(--stroke);margin:20px 4px 0}.sidebar-bottom .btn{width:100%}
+    .center{padding:22px 26px 25px;text-align:center;display:flex;flex-direction:column;align-items:center}.center-header{width:100%;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;text-align:left}.center-header .eyebrow{font-size:11px;color:#8d82dc;font-weight:800;letter-spacing:1.2px;display:block}.title-input{border:1px solid transparent;min-width:0;width:min(100%,320px);border-radius:9px;padding:5px 8px;margin:2px -8px;font-size:21px;font-weight:800;color:#232640;outline:none}.title-input:focus,.title-input:hover{border-color:#e1dcff;background:#faf9ff}.wheel-area{width:min(100%,430px);aspect-ratio:1;position:relative;margin:14px auto 0;display:grid;place-items:center}.wheel-canvas{width:100%;height:100%;display:block}.pointer{position:absolute;top:0;left:50%;transform:translateX(-50%);z-index:3;filter:drop-shadow(0 2px 2px #39315a33)}.wheel-center-cap{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:#fff;border:7px solid #fff;box-shadow:0 1px 10px #20234c30;border-radius:100%;width:56px;height:56px;display:grid;place-items:center;color:#6555dc;font-size:25px;z-index:2}.spin-btn{min-width:195px;min-height:56px;font-size:17px;border-radius:18px;box-shadow:0 9px 20px #6f5ce72c}.probability{margin:12px 0 0;font-size:12px;color:var(--muted)}.result{margin-top:18px;background:linear-gradient(135deg,#f1efff,#faf8ff);border:1px solid #e8e3ff;border-radius:15px;padding:14px 20px;width:100%;min-height:76px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px}.result-label{font-size:11px;color:#897bdd;font-weight:800;letter-spacing:.75px}.result-value{font-size:20px;line-height:1.35;font-weight:800;overflow-wrap:anywhere}.result-placeholder{color:#9a99b2;font-size:14px}
+    .right{padding:20px 18px}.editor-description{margin:-4px 6px 15px}.entry-add{display:flex;flex-direction:column;gap:8px}.form-input,.form-textarea{display:block;width:100%;border:1px solid #dfe2ec;border-radius:10px;background:#fff;color:var(--ink);padding:10px 12px;min-height:40px;font-size:14px;outline:none}.form-input:focus,.form-textarea:focus{border-color:#9b8bf8;box-shadow:0 0 0 3px #9b8bf81b}.form-textarea{resize:vertical;min-height:72px}.entry-list{margin-top:14px;display:flex;flex-direction:column;gap:8px;max-height:455px;overflow:auto;padding-right:2px}.entry{display:flex;align-items:center;gap:6px;background:#fbfbfe;padding:7px 7px;border:1px solid #eff0f6;border-radius:11px}.entry-index{min-width:18px;font-size:12px;text-align:center;color:#999bb0}.entry .form-input{min-width:0;flex:1;padding:7px 8px;min-height:34px;font-size:13px;background:#fff}.entry-actions{display:flex;gap:1px}.entry-actions button{font-size:13px;color:#8c8eaa;border:0;background:transparent;width:23px;height:31px;padding:0;border-radius:5px}.entry-actions button:hover:not(:disabled){color:var(--violet);background:#edeaff}.entry-actions button.delete:hover{color:#c44b59}.entry-empty{padding:30px 10px;text-align:center;color:var(--muted);font-size:13px}
+    .history{margin-top:18px;padding:21px 24px}.history-head{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}.history-title{margin:0;font-size:18px}.history-title-note{margin:4px 0 0;color:var(--muted);font-size:12px}.history-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.date-input{border:1px solid var(--stroke);border-radius:10px;background:#fff;min-height:41px;padding:7px 11px;color:var(--ink);font-size:13px}.history-count{color:#6e5add;font-weight:750;margin:16px 0 11px;font-size:13px}.history-list{display:flex;flex-direction:column;gap:9px}.history-item{background:#fafaff;border:1px solid #eff0f7;border-radius:11px;padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px}.history-main{min-width:0}.history-line{font-size:14px;font-weight:650;overflow-wrap:anywhere}.history-time{font-size:12px;color:var(--muted);margin-top:4px}.history-item .btn{flex-shrink:0}.empty{text-align:center;padding:35px 10px;color:#9296ad;font-size:13px}.storage-note{padding:13px 18px;background:#f0f2ff;border-radius:12px;margin-top:18px;color:#676f91;font-size:12px;line-height:1.7}.storage-note strong{color:#41446b}.footer{text-align:center;margin-top:20px;color:#a0a3b6;font-size:12px}
+    dialog{border:1px solid #e7e7f1;border-radius:18px;box-shadow:0 24px 80px #1b194c3d;max-width:min(94vw,480px);width:100%;padding:24px;color:var(--ink)}dialog::backdrop{background:#12142d88;backdrop-filter:blur(3px)}dialog h2{font-size:19px;margin:0 0 8px}dialog p{font-size:13px;line-height:1.65;color:#737891}dialog label{font-weight:650;font-size:13px;display:block;margin:16px 0 7px}dialog .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:22px}.message{color:#be4354;font-size:12px;margin:8px 0 0;min-height:14px}
+    .cloud-panel{margin-top:18px;padding:21px 24px}
+    .cloud-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;max-width:750px;margin-top:14px}
+    .cloud-grid label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
+    .cloud-grid input{width:100%}.cloud-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:13px}
+    .cloud-note{font-size:12px;color:var(--muted);line-height:1.7;margin-top:12px}
+    @media(max-width:730px){.cloud-grid{grid-template-columns:1fr}.cloud-panel{padding:16px 14px}}
+    @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important}}
+    #printSheet{display:none}
+    @media(max-width:1150px){.workspace{grid-template-columns:210px minmax(300px,1fr)}.right{grid-column:2}.left{grid-row:1 / 3}.center{min-height:0}.entry-list{max-height:330px}}
+    @media(max-width:730px){.container{padding:14px 12px 45px}.topbar{align-items:flex-start;flex-direction:column;margin-bottom:14px}.top-actions{width:100%}.top-actions .btn{flex:1}.workspace{grid-template-columns:minmax(0,1fr);gap:12px}.left{min-height:auto;padding:14px 12px}.left,.right{grid-column:auto;grid-row:auto}.wheel-menu{flex-direction:row;overflow-x:auto;scrollbar-width:thin;padding-bottom:3px}.wheel-item{width:auto;min-width:140px;max-width:210px;padding:10px 12px;flex:0 0 auto}.sidebar-bottom{border:0;margin:10px 0 0;padding:0}.center{padding:16px 12px 20px}.center-header{padding:0 9px}.title-input{font-size:19px}.wheel-area{width:min(100%,385px);margin:10px auto 0}.history{padding:16px 12px}.history-actions{width:100%}.history-actions .btn{flex:1}.right{padding:17px 14px}.history-item{padding:11px}.history-line{font-size:13px}.status{margin-left:auto}.top-actions .status{margin-left:0}.brand-icon{height:42px;width:42px}.top-actions .btn{min-width:0}}
+    @media(max-width:380px){.top-actions .btn{font-size:12px;padding:9px}.wheel-center-cap{width:44px;height:44px}.btn{font-size:12px}.history-actions{gap:6px}}
+    @media(prefers-reduced-motion:reduce){.btn{transition:none}}
+    @media print{
+      @page{size:auto;margin:16mm}html,body{background:#fff!important;color:#111}.container{display:none!important}#printSheet{display:block!important;padding:0;font-family:Arial,"PingFang SC",sans-serif;color:#111}#printSheet h1{font-size:22px;margin-bottom:6px}#printSheet p{font-size:12px;color:#555}#printSheet .print-row{padding:12px 0;border-bottom:1px solid #ccc;page-break-inside:avoid;font-size:14px;display:flex;justify-content:space-between;gap:12px}.print-time{font-size:12px;color:#666;white-space:nowrap}.print-footer{margin-top:24px;font-size:11px;color:#555}
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-icon" aria-hidden="true">✳</div>
+        <div><h1>SpinNote <span style="font-weight:500;color:#8584ac">· 随机轮盘</span></h1><p class="subtitle">写入你的选择，公平抽取，留下每天的答案。</p></div>
+      </div>
+      <div class="top-actions">
+        <span id="saveStatus" class="status" role="status">自动保存已开启</span>
+        <button class="btn" id="exportBtn" type="button">↓ 备份数据</button>
+        <button class="btn" id="importBtn" type="button">↑ 导入备份</button>
+        <input id="importFile" hidden type="file" accept="application/json,.json">
+      </div>
+    </header>
+
+    <section class="workspace" aria-label="随机轮盘工作区">
+      <aside class="panel left">
+        <div class="panel-heading"><span class="panel-title">我的轮盘</span><span id="wheelCount" class="minor">0 个</span></div>
+        <nav class="wheel-menu" id="wheelMenu" aria-label="选择轮盘"></nav>
+        <div class="sidebar-bottom"><button class="btn btn-primary" id="newWheelBtn" type="button">＋ 新建轮盘</button></div>
+      </aside>
+
+      <section class="panel center" aria-label="抽取区">
+        <div class="center-header">
+          <div style="min-width:0;flex:1"><span class="eyebrow">YOUR WHEEL</span><input id="wheelNameInput" class="title-input" aria-label="轮盘名称" maxlength="80"><div class="minor" id="wheelSummary" style="margin-top:2px"></div></div>
+          <button class="btn btn-subtle btn-danger" id="deleteWheelBtn" type="button" title="删除这个轮盘">删除轮盘</button>
+        </div>
+        <div class="wheel-area">
+          <canvas id="wheelCanvas" class="wheel-canvas" role="img" aria-label="当前选项的彩色随机轮盘"></canvas>
+          <svg class="pointer" width="32" height="43" viewBox="0 0 32 43" aria-hidden="true"><path d="M16 40L2 4Q1 1 5 1H27Q31 1 30 4Z" fill="#252644" stroke="white" stroke-width="3"/></svg>
+          <div class="wheel-center-cap" aria-hidden="true">✦</div>
+        </div>
+        <button class="btn btn-primary spin-btn" id="spinBtn" type="button">开始随机抽取 ↗</button>
+        <p class="probability">使用安全随机数 · 每个选项位置的中签机会相等</p>
+        <div id="resultBox" class="result" aria-live="polite"><span class="result-label">最近一次结果</span><span class="result-placeholder">点击开始，让轮盘为你决定</span></div>
+      </section>
+
+      <section class="panel right" aria-label="编辑轮盘选项">
+        <div class="panel-heading" style="margin-left:2px;margin-right:2px"><span class="panel-title">轮盘选项</span><span id="entryCount" class="minor">0 项</span></div>
+        <p class="hint editor-description">每行输入一个选项，可以一次加入多个。点击下方文字也可以直接修改。</p>
+        <div class="entry-add"><textarea id="entryTextarea" class="form-textarea" rows="3" maxlength="12000" placeholder="例如：&#10;粿条&#10;鸡饭&#10;面条" aria-label="输入要加入的轮盘选项"></textarea><button class="btn btn-primary" id="addEntriesBtn" type="button">＋ 加入选项</button></div>
+        <div class="entry-list" id="entryList"></div>
+        <p class="hint" style="margin-top:15px">注意：同样的内容如果重复加入，会占用多个位置，因此增加被抽中的机会。最多 200 项。</p>
+      </section>
+    </section>
+
+    <section class="panel history" aria-labelledby="historyHeading">
+      <div class="history-head">
+        <div><h2 id="historyHeading" class="history-title">今日内容 / 抽取记录</h2><p class="history-title-note">每次抽取后自动写入。以前的记录可以按日期查看，也不会随轮盘删除而丢失。</p></div>
+        <div class="history-actions">
+          <input class="date-input" type="date" id="historyDate" aria-label="选择记录日期">
+          <button class="btn" id="todayBtn" type="button">今天</button>
+          <button class="btn" id="copyBtn" type="button">复制内容</button>
+          <button class="btn" id="csvBtn" type="button">导出 CSV</button>
+          <button class="btn btn-primary" id="printBtn" type="button">打印 / 存 PDF</button>
+        </div>
+      </div>
+      <p class="history-count" id="historyCount">共 0 条记录</p>
+      <div class="history-list" id="historyList"></div>
+      <div class="storage-note"><strong>数据安全说明：</strong>选项与历史会自动保存在当前浏览器里，刷新或重新打开不会主动清空。但清除网站数据、设备损坏或浏览器清理仍可能造成丢失；请定期点击“备份数据”保存 JSON 文件。连接下方云端账号后，两台手机会定期同步；未连接时可通过导入备份合并。</div>
+    </section>
+    <section class="panel cloud-panel" aria-label="跨设备云同步">
+      <div class="history-head"><div><h2 class="history-title">跨设备云同步 <span class="minor">可选</span></h2><p class="history-title-note">连接你自己的 Supabase 项目，同一账号在不同设备同步轮盘和记录。</p></div><span class="status warn" id="cloudStatus" role="status">未连接云端</span></div>
+      <div class="cloud-grid">
+        <div><label for="cloudUrl">Supabase 项目 URL</label><input class="form-input" id="cloudUrl" type="url" placeholder="https://xxxxx.supabase.co" autocomplete="url"></div>
+        <div><label for="cloudKey">Publishable / anon 公钥（不可填写 service_role 密钥）</label><input class="form-input" id="cloudKey" type="text" placeholder="sb_publishable_... 或 eyJ..." autocomplete="off"></div>
+        <div><label for="cloudEmail">账号邮箱</label><input class="form-input" id="cloudEmail" type="email" placeholder="you@example.com" autocomplete="username"></div>
+        <div><label for="cloudPassword">密码</label><input class="form-input" id="cloudPassword" type="password" placeholder="至少 6 位，建议更长" autocomplete="current-password"></div>
+      </div>
+      <div class="cloud-actions">
+        <button class="btn" id="cloudRegister" type="button">注册</button>
+        <button class="btn btn-primary" id="cloudLogin" type="button">登录并连接</button>
+        <button class="btn" id="cloudPull" type="button">从云端恢复</button>
+        <button class="btn" id="cloudPush" type="button">立即同步</button>
+        <button class="btn btn-danger" id="cloudLogout" type="button">退出云同步</button>
+      </div>
+      <div class="cloud-note" id="cloudInfo">默认仍保存在本机。连接后自动上传修改；两台手机联网后约每 10 秒检查更新，重新打开网页时也会检查；离线修改会在恢复网络后尝试合并。首次使用需按 README 创建数据库和行级权限。不要在公用设备上保持登录。</div>
+    </section>
+    <footer class="footer">SpinNote · 无广告 · 可选账号同步 · 无外部追踪 · 轮盘结果由设备安全随机数生成</footer>
+  </main>
+  <section id="printSheet" aria-hidden="true"></section>
+
+  <dialog id="wheelDialog" aria-labelledby="dialogHeading">
+    <h2 id="dialogHeading">新建一个轮盘</h2><p>给轮盘起个名称，例如“今天吃什么”、“晚餐”或“工作分配”。</p>
+    <form id="newWheelForm"><label for="newWheelName">轮盘名称</label><input class="form-input" id="newWheelName" required maxlength="80" placeholder="例如：asd"><p class="message" id="newWheelError"></p><div class="modal-actions"><button type="button" class="btn" id="cancelDialog">取消</button><button class="btn btn-primary" type="submit">创建轮盘</button></div></form>
+  </dialog>
+  <script>
+  (() => {
+    'use strict';
+    const KEY='spinnote_data_v1', DB='spinnote_db_v1', MAX_WHEELS=100, MAX_ITEMS=200;
+    const colors=['#8875ed','#f3a0aa','#70c6c3','#f6c879','#7ca7eb','#b8a1ee','#f29d75','#8ccda8','#dea4cd','#9ca4ed','#f1be75','#99bfd4'];
+    const $=id=>document.getElementById(id);
+    let state, db=null, storageFault=false, spinning=false, angle=0, drawId=null, initDone=false, editSerial=0;
+    const today=()=>dayKey(new Date());
+    function dayKey(date){return date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0')}
+    const now=()=>new Date().toISOString();
+    function uid(){return (globalThis.crypto && crypto.randomUUID)?crypto.randomUUID():('id-'+Date.now()+'-'+Math.random().toString(36).slice(2))}
+    function newWheel(name,items=[]){let time=now();return {id:uid(),name,items:items.map(text=>({id:uid(),text})),createdAt:time,updatedAt:time}}
+    function initialState(){let wheel=newWheel('今天吃什么',['粿条','鸡饭','面条','炒饭','火锅','沙拉']);return {schemaVersion:1,createdAt:now(),updatedAt:now(),activeWheelId:wheel.id,wheels:[wheel],draws:[],deletedWheelIds:[]}}
+    function validString(s,max){return typeof s==='string' && s.trim().length>0 && s.trim().length<=max}
+    function validate(data){
+      if(!data || data.schemaVersion!==1 || !Array.isArray(data.wheels) || !Array.isArray(data.draws) || data.wheels.length>1000 || data.draws.length>300000) throw new Error('备份文件结构不正确或文件过大');
+      if(data.deletedWheelIds!==undefined&&(!Array.isArray(data.deletedWheelIds)||data.deletedWheelIds.length>10000||data.deletedWheelIds.some(x=>!validString(x,100))))throw new Error('删除记录不正确');
+      const ids=new Set();
+      for(const w of data.wheels){
+        if(!validString(w.id,100)||!validString(w.name,80)||!Array.isArray(w.items)||w.items.length>MAX_ITEMS)throw new Error('存在不正确的轮盘数据');
+        if(ids.has(w.id))throw new Error('轮盘 ID 重复');ids.add(w.id);
+        const itemIds=new Set();for(const it of w.items){if(!validString(it.id,100)||!validString(it.text,120)||itemIds.has(it.id))throw new Error('选项数据有误');itemIds.add(it.id)}
+      }
+      const drawIds=new Set();for(const d of data.draws){if(!validString(d.id,100)||!validString(d.wheelName,80)||!validString(d.value,120)||!/^\d{4}-\d{2}-\d{2}$/.test(d.localDay)||isNaN(Date.parse(d.occurredAt))||drawIds.has(d.id))throw new Error('抽取记录数据有误');drawIds.add(d.id)}
+      return data;
+    }
+    function readLocal(){try{let raw=localStorage.getItem(KEY);return raw?validate(JSON.parse(raw)):null}catch(err){console.warn('Local backup unreadable',err);return null}}
+    function openDatabase(){return new Promise((resolve,reject)=>{if(!('indexedDB' in globalThis))return reject(new Error('IndexedDB unavailable'));let req=indexedDB.open(DB,1);req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains('snapshots'))req.result.createObjectStore('snapshots')};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
+    function readDb(){return new Promise((resolve,reject)=>{if(!db)return resolve(null);let tx=db.transaction('snapshots','readonly'),req=tx.objectStore('snapshots').get('primary');req.onsuccess=()=>{try{resolve(req.result?validate(req.result):null)}catch(err){reject(err)}};req.onerror=()=>reject(req.error)})}
+    function writeDb(snapshot){return new Promise((resolve,reject)=>{if(!db)return resolve();let tx=db.transaction('snapshots','readwrite');tx.objectStore('snapshots').put(snapshot,'primary');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error)})}
+    let writeChain=Promise.resolve();
+    function save(){
+      state.updatedAt=now();const snapshot=JSON.parse(JSON.stringify(state));let mirrorSaved=false;
+      try{localStorage.setItem(KEY,JSON.stringify(snapshot));mirrorSaved=true}catch(err){console.warn('localStorage unavailable',err)}
+      writeChain=writeChain.then(()=>writeDb(snapshot)).then(()=>{storageFault=false;showStorageStatus()}).catch(err=>{console.error('Data persistence error',err);storageFault=!mirrorSaved;showStorageStatus()});
+      if(!db && !mirrorSaved){storageFault=true;showStorageStatus()}
+      if(initDone){editSerial++;localDirty=true;scheduleCloud();}
+      return writeChain;
+    }
+    function showStorageStatus(){let el=$('saveStatus');el.classList.toggle('warn',storageFault);el.textContent=storageFault?'保存失败 · 请备份':'已自动保存在本机'}
+    function currentWheel(){return state.wheels.find(w=>w.id===state.activeWheelId)||null}
+    function activeDraws(){return state.draws.filter(d=>d.localDay===$('historyDate').value).sort((a,b)=>b.occurredAt.localeCompare(a.occurredAt))}
+    function randomInt(n){if(!globalThis.crypto?.getRandomValues)throw new Error('该浏览器不支持安全随机数，请更新浏览器');if(!Number.isSafeInteger(n)||n<1||n>0x100000000)throw new Error('选项数量不正确');const block=0x100000000,limit=Math.floor(block/n)*n,arr=new Uint32Array(1);do{crypto.getRandomValues(arr)}while(arr[0]>=limit);return arr[0]%n}
+    function textEl(tag,cls,content){let e=document.createElement(tag);if(cls)e.className=cls;if(content!==undefined)e.textContent=content;return e}
+    function notify(message){alert(message)}
+    function render(){renderMenu();renderCenter();renderEntries();renderHistory();showStorageStatus()}
+    function renderMenu(){
+      const menu=$('wheelMenu');menu.replaceChildren();$('wheelCount').textContent=state.wheels.length+' 个';
+      if(state.wheels.length===0)menu.append(textEl('p','hint','还没有轮盘，点击下方创建。'));
+      for(const w of state.wheels){let btn=textEl('button','wheel-item'+(w.id===state.activeWheelId?' active':''));btn.type='button';btn.setAttribute('aria-current',w.id===state.activeWheelId?'true':'false');btn.title=w.name;
+        btn.append(textEl('span','wheel-menu-name',w.name),textEl('span','wheel-menu-count',w.items.length+' 项'));
+        btn.addEventListener('click',()=>{if(spinning)return;state.activeWheelId=w.id;angle=0;save();render()});menu.append(btn)
+      }
+    }
+    function renderCenter(){let w=currentWheel(),name=$('wheelNameInput');name.disabled=!w||spinning;name.value=w?w.name:'';name.placeholder=w?'轮盘名称':'请先创建轮盘';$('deleteWheelBtn').disabled=!w||spinning;$('spinBtn').disabled=!w||w.items.length===0||spinning;$('wheelSummary').textContent=w?`${w.items.length} 个可抽选项`:'请新建轮盘，然后添加内容';drawWheel();renderResult()}
+    function renderResult(){let box=$('resultBox');box.replaceChildren(textEl('span','result-label','最近一次结果'));if(spinning){box.append(textEl('span','result-placeholder','轮盘正在旋转…'));return}let w=currentWheel(),last=w?state.draws.filter(d=>d.wheelId===w.id).sort((a,b)=>b.occurredAt.localeCompare(a.occurredAt))[0]:null;if(last)box.append(textEl('span','result-value',last.value));else box.append(textEl('span','result-placeholder','点击开始，让轮盘为你决定'))}
+    function renderEntries(){
+      let w=currentWheel();$('entryCount').textContent=(w?w.items.length:0)+' 项';$('entryTextarea').disabled=!w||spinning;$('addEntriesBtn').disabled=!w||spinning;$('newWheelBtn').disabled=spinning;
+      let target=$('entryList');target.replaceChildren();if(!w||!w.items.length){target.append(textEl('div','entry-empty',w?'还没有选项，添加第一个吧。':'先创建一个轮盘。'));return}
+      w.items.forEach((item,i)=>{
+        let row=textEl('div','entry'),index=textEl('span','entry-index',String(i+1)),input=textEl('input','form-input');input.value=item.text;input.maxLength=120;input.disabled=spinning;input.setAttribute('aria-label','第 '+(i+1)+' 个选项');
+        input.addEventListener('change',()=>{let cleaned=input.value.trim();if(!cleaned){notify('选项不能为空；如要移除请点击删除按钮。');input.value=item.text;return}item.text=cleaned;w.updatedAt=now();save();drawWheel();renderHistory()});
+        let controls=textEl('div','entry-actions');
+        const action=(label,title,fn,disabled=false,cls='')=>{let b=textEl('button',cls,label);b.type='button';b.title=title;b.setAttribute('aria-label',title);b.disabled=disabled||spinning;b.addEventListener('click',fn);return b};
+        controls.append(action('↑','上移选项',()=>moveItem(i,-1),i===0),action('↓','下移选项',()=>moveItem(i,1),i===w.items.length-1),action('×','删除选项',()=>removeItem(item.id),false,'delete'));
+        row.append(index,input,controls);target.append(row)
+      })
+    }
+    function moveItem(index,dir){let w=currentWheel();if(!w||spinning)return;let next=index+dir;if(next<0||next>=w.items.length)return;[w.items[index],w.items[next]]=[w.items[next],w.items[index]];w.updatedAt=now();save();renderEntries();drawWheel()}
+    function removeItem(id){let w=currentWheel();if(!w||spinning)return;let item=w.items.find(x=>x.id===id);if(!item)return;if(!confirm(`确定删除选项「${item.text}」？历史抽取记录不会删除。`))return;w.items=w.items.filter(x=>x.id!==id);w.updatedAt=now();save();render();}
+    function addEntries(){let w=currentWheel();if(!w||spinning)return;let raw=$('entryTextarea').value,lines=raw.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);if(!lines.length){notify('请先输入选项，每行一个。');return}if(lines.some(s=>s.length>120)){notify('每个选项最多 120 个字。');return}if(w.items.length+lines.length>MAX_ITEMS){notify(`每个轮盘最多 ${MAX_ITEMS} 项，还可加入 ${MAX_ITEMS-w.items.length} 项。`);return}w.items.push(...lines.map(text=>({id:uid(),text})));w.updatedAt=now();$('entryTextarea').value='';save();render();}
+    function drawWheel(){
+      let canvas=$('wheelCanvas'),cssWidth=canvas.getBoundingClientRect().width||350,dpr=Math.min(globalThis.devicePixelRatio||1,3),px=Math.round(cssWidth*dpr);if(canvas.width!==px||canvas.height!==px){canvas.width=px;canvas.height=px}let ctx=canvas.getContext('2d');if(!ctx)return;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,cssWidth,cssWidth);let r=cssWidth/2-14;ctx.translate(cssWidth/2,cssWidth/2);
+      ctx.beginPath();ctx.arc(0,0,r+7,0,Math.PI*2);ctx.fillStyle='#f1f0fa';ctx.fill();
+      let w=currentWheel(),items=w?.items||[];
+      if(!items.length){ctx.beginPath();ctx.arc(0,0,r,0,2*Math.PI);ctx.fillStyle='#e9e9f3';ctx.fill();ctx.fillStyle='#9494ab';ctx.textAlign='center';ctx.font='600 14px system-ui';ctx.fillText('请添加轮盘选项',0,-r*.47);return}
+      let slice=Math.PI*2/items.length;
+      items.forEach((item,i)=>{
+        let start=-Math.PI/2+angle+i*slice,end=start+slice;
+        ctx.beginPath();ctx.moveTo(0,0);ctx.arc(0,0,r,start,end);ctx.closePath();ctx.fillStyle=colors[i%colors.length];ctx.fill();ctx.strokeStyle='#ffffff';ctx.lineWidth=items.length>65?.5:2;ctx.stroke();
+        let theta=start+slice/2,x=Math.cos(theta),y=Math.sin(theta);
+        ctx.save();ctx.translate(x*r*.62,y*r*.62);
+        let direction=((theta%(2*Math.PI))+2*Math.PI)%(2*Math.PI),flip=(direction>Math.PI/2 && direction<Math.PI*1.5);
+        ctx.rotate(theta+(flip?Math.PI:0));ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#242541';
+        let text=items.length>36?String(i+1):item.text,fs=Math.max(9,Math.min(items.length>24?10:items.length>12?11:14,r*.085));ctx.font=`700 ${fs}px system-ui, sans-serif`;
+        let maxW=Math.max(24,r*.68),short=text;while(ctx.measureText(short).width>maxW&&short.length>1)short=short.slice(0,-2)+'…';ctx.fillText(short,0,0);ctx.restore();
+      });
+      ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.strokeStyle='#fff';ctx.lineWidth=4;ctx.stroke();
+    }
+    function spin(){
+      if(spinning)return;let w=currentWheel();if(!w||!w.items.length)return;
+      let choice,turns;try{choice=randomInt(w.items.length);turns=5+randomInt(3)}catch(err){notify(err.message);return}
+      spinning=true;let picked=w.items[choice],started=performance.now(),record={id:uid(),wheelId:w.id,wheelName:w.name,itemId:picked.id,value:picked.text,occurredAt:now(),localDay:today()};
+      // Persist first: a closed tab cannot erase a draw that has already been initiated.
+      state.draws.push(record);$('historyDate').value=record.localDay;save();renderCenter();renderEntries();$('spinBtn').textContent='正在旋转…';$('spinBtn').disabled=true;
+      let startAngle=angle,slice=2*Math.PI/w.items.length,targetNormalized=-(choice+.5)*slice,
+        normalized=x=>((x%(Math.PI*2))+Math.PI*2)%(Math.PI*2),
+        delta=normalized(targetNormalized-normalized(startAngle)),endAngle=startAngle+turns*2*Math.PI+delta,duration=3600;
+      const step=t=>{let progress=Math.min((t-started)/duration,1);if(progress<0)progress=0;let ease=1-Math.pow(1-progress,5);angle=startAngle+(endAngle-startAngle)*ease;drawWheel();if(progress<1){drawId=requestAnimationFrame(step)}else{angle=normalized(endAngle);spinning=false;drawId=null;$('spinBtn').textContent='再次随机抽取 ↗';render();$('resultBox').scrollIntoView({behavior:'smooth',block:'nearest'});}};
+      // requestAnimationFrame timestamps and performance.now share the same clock.
+      drawId=requestAnimationFrame(step);
+    }
+    function renderHistory(){
+      let entries=activeDraws();$('historyCount').textContent=$('historyDate').value+' · 共 '+entries.length+' 条记录';let list=$('historyList');list.replaceChildren();
+      if(!entries.length){list.append(textEl('div','empty','这一天还没有抽取记录。使用轮盘后，会自动显示在这里。'));return}
+      entries.forEach(rec=>{let item=textEl('div','history-item'),main=textEl('div','history-main'),row=textEl('div','history-line',`轮盘（${rec.wheelName}） = ${rec.value}`),stamp=textEl('div','history-time',new Date(rec.occurredAt).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit',second:'2-digit'})),del=textEl('button','btn btn-subtle btn-danger','删除');del.type='button';del.setAttribute('aria-label','删除这条记录');del.addEventListener('click',()=>{
+        if(spinning)return;if(!confirm(`确定手动删除这条记录？\n轮盘（${rec.wheelName}） = ${rec.value}\n删除后无法撤销，建议先备份。`))return;state.draws=state.draws.filter(d=>d.id!==rec.id);save();renderHistory();renderResult();
+      });main.append(row,stamp);item.append(main,del);list.append(item)})
+    }
+    function rowsText(entries){return entries.map(d=>`轮盘（${d.wheelName}） = ${d.value}`).join('\n')}
+    function download(filename,content,mime){let blob=new Blob([content],{type:mime}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000)}
+    function exportJson(){let payload={format:'SpinNote-Backup',exportedAt:now(),data:state};download('SpinNote-完整备份-'+today()+'.json',JSON.stringify(payload,null,2),'application/json;charset=utf-8')}
+    function csvCell(value){let s=String(value);if(/^[\s]*[=+\-@]/.test(s))s="'"+s;return '"'+s.replaceAll('"','""')+'"'}
+    function exportCsv(){let selected=activeDraws().slice().reverse(),csv='\uFEFF'+[['日期','时间','轮盘名称','结果'].map(csvCell).join(',')].concat(selected.map(d=>[d.localDay,new Date(d.occurredAt).toLocaleTimeString('zh-CN',{hour12:false}),d.wheelName,d.value].map(csvCell).join(','))).join('\r\n');download('轮盘记录-'+$('historyDate').value+'.csv',csv,'text/csv;charset=utf-8')}
+    function importJson(file){if(spinning){notify('请等待当前轮盘停止后再导入备份。');return}if(!file)return;if(file.size>35*1024*1024){notify('备份文件过大，请检查格式。');return}let reader=new FileReader();reader.onload=()=>{
+      try{let payload=JSON.parse(reader.result),incoming=validate(payload?.format==='SpinNote-Backup'?payload.data:payload);if(!confirm(`准备合并导入：${incoming.wheels.length} 个轮盘，${incoming.draws.length} 条记录。\n不会清除现有内容；相同轮盘保留较新的编辑版本。继续吗？`))return;
+        let byWheel=new Map(state.wheels.map(w=>[w.id,w]));for(const w of incoming.wheels){let old=byWheel.get(w.id);if(!old||Date.parse(w.updatedAt||0)>Date.parse(old.updatedAt||0))byWheel.set(w.id,w)}if(byWheel.size>MAX_WHEELS)throw new Error(`最多只能保留 ${MAX_WHEELS} 个轮盘`);
+        let byDraw=new Map(state.draws.map(d=>[d.id,d]));for(const d of incoming.draws)if(!byDraw.has(d.id))byDraw.set(d.id,d);
+        state.wheels=[...byWheel.values()];state.draws=[...byDraw.values()];if(!currentWheel())state.activeWheelId=state.wheels[0]?.id||null;save();render();notify('导入完成！原有记录已经保留。');
+      }catch(err){notify('导入失败：'+err.message)}finally{$('importFile').value=''}
+    };reader.onerror=()=>notify('读取文件失败');reader.readAsText(file)
+    }
+    function printRecords(){let date=$('historyDate').value,entries=activeDraws().slice().reverse(),sheet=$('printSheet');sheet.replaceChildren();sheet.append(textEl('h1','',date===today()?'今日内容 · 随机轮盘记录':'随机轮盘记录'));sheet.append(textEl('p','',`日期：${date}　　合计：${entries.length} 条`));for(const d of entries){let row=textEl('div','print-row');row.append(textEl('span','',`轮盘（${d.wheelName}） = ${d.value}`),textEl('span','print-time',new Date(d.occurredAt).toLocaleTimeString('zh-CN',{hour:'2-digit',minute:'2-digit'})));sheet.append(row)}if(!entries.length)sheet.append(textEl('p','','这一天没有抽取记录。'));sheet.append(textEl('div','print-footer','SpinNote · 随机轮盘记录 · '+new Date().toLocaleString('zh-CN')));window.print()}
+    async function copyRecords(){let text=$('historyDate').value+'\n'+rowsText(activeDraws().slice().reverse());try{if(navigator.clipboard&&globalThis.isSecureContext)await navigator.clipboard.writeText(text);else{let el=document.createElement('textarea');el.value=text;el.style.position='fixed';el.style.top='-9999px';document.body.append(el);el.select();if(!document.execCommand('copy'))throw new Error('复制失败');el.remove()}notify('已复制该日期的全部记录')}catch(err){notify('自动复制不可用，请使用“打印 / 存 PDF”或“导出 CSV”。')}}
+
+    // Optional Supabase sync. No service-role keys or privileged credentials are accepted.
+    const CLOUD_CFG='spinnote_cloud_config_v1', CLOUD_SESSION='spinnote_cloud_session_v1';
+    let cloudConfig=null, cloudSession=null, cloudRevision=null, cloudTimer=null, cloudPoll=null, cloudBusy=false, cloudConflict=false, localDirty=false;
+    function cloudLabel(msg,warning=true){$('cloudStatus').textContent=msg;$('cloudStatus').classList.toggle('warn',warning)}
+    function readCloudConfig(){
+      try{const c=JSON.parse(localStorage.getItem(CLOUD_CFG)||'null');if(c){$('cloudUrl').value=c.url||'';$('cloudKey').value=c.key||'';cloudConfig=c}}catch{}
+      try{cloudSession=JSON.parse(sessionStorage.getItem(CLOUD_SESSION)||'null')}catch{}
+      if(cloudSession?.access_token)cloudLabel('已连接 · 待同步',false);
+    }
+    function configFromInputs(){
+      const url=$('cloudUrl').value.trim().replace(/\/+$/,''),key=$('cloudKey').value.trim();
+      if(!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(url))throw Error('请填写有效的 Supabase HTTPS 项目地址');
+      if(!key||/service.role|sb_secret_/i.test(key))throw Error('只能使用公开 publishable / anon 公钥');
+      cloudConfig={url,key};localStorage.setItem(CLOUD_CFG,JSON.stringify(cloudConfig));return cloudConfig;
+    }
+    async function cloudRequest(path,opts={},auth=true){
+      if(!cloudConfig)throw Error('请先配置云端');
+      let headers={'apikey':cloudConfig.key,...(opts.body?{'Content-Type':'application/json'}:{}),...opts.headers};
+      if(auth){if(!cloudSession?.access_token)throw Error('请先登录');if(Date.now()>=cloudSession.expires_at*1000-60000)await refreshCloudToken();headers.Authorization='Bearer '+cloudSession.access_token}
+      let response=await fetch(cloudConfig.url+path,{...opts,headers});
+      if(!response.ok){let info=await response.text();throw Error('云端请求失败 ('+response.status+') '+info.slice(0,200))}
+      if(response.status===204)return null;
+      let raw=await response.text();return raw?JSON.parse(raw):null;
+    }
+    async function refreshCloudToken(){
+      if(!cloudSession?.refresh_token)throw Error('登录已过期，请重新登录');
+      const response=await fetch(cloudConfig.url+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{'apikey':cloudConfig.key,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:cloudSession.refresh_token})});
+      if(!response.ok){cloudSession=null;sessionStorage.removeItem(CLOUD_SESSION);throw Error('登录已过期，请重新登录')}
+      setCloudSession(await response.json());
+    }
+    function setCloudSession(data){cloudSession={access_token:data.access_token,refresh_token:data.refresh_token,expires_at:Math.floor(Date.now()/1000)+(data.expires_in||3600),user:data.user?.id||cloudSession?.user};sessionStorage.setItem(CLOUD_SESSION,JSON.stringify(cloudSession))}
+    async function cloudAuth(register){
+      if(cloudBusy)return;
+      try{
+        configFromInputs();const email=$('cloudEmail').value.trim(),password=$('cloudPassword').value;
+        if(!email||password.length<6)throw Error('请输入邮箱和至少 6 位密码');
+        cloudBusy=true;cloudLabel('正在连接…');
+        const path=register?'/auth/v1/signup':'/auth/v1/token?grant_type=password';
+        const data=await cloudRequest(path,{method:'POST',body:JSON.stringify({email,password})},false);
+        if(!data.access_token){cloudLabel('请验证邮箱');notify('注册成功，请查收验证邮件，然后再登录');return}
+        setCloudSession(data);cloudRevision=null;cloudConflict=false;cloudLabel('已连接',false);
+        // Do not silently overwrite an existing cloud snapshot after login.
+        const remote=await getCloudRow();
+        if(remote){mergeCloud(remote.data);cloudRevision=remote.revision;cloudConflict=false;cloudLabel('已连接 · 正在合并',false);localDirty=true;scheduleCloud()}
+        else{localDirty=true;scheduleCloud()}
+      }catch(e){cloudLabel('连接失败');notify(e.message)}finally{cloudBusy=false;$('cloudPassword').value=''}
+    }
+    async function getCloudRow(){
+      let rows=await cloudRequest('/rest/v1/spinnote_snapshots?select=revision,data&limit=1',{method:'GET'});
+      return rows?.[0]||null;
+    }
+
+    function mergeCloud(incoming){
+      validate(incoming);
+      const deleted=new Set([...(incoming.deletedWheelIds||[]),...(state.deletedWheelIds||[])]);
+      const wheels=new Map(incoming.wheels.filter(w=>!deleted.has(w.id)).map(w=>[w.id,w]));
+      for(const w of state.wheels){if(deleted.has(w.id))continue;let prev=wheels.get(w.id);if(!prev||Date.parse(w.updatedAt||0)>Date.parse(prev.updatedAt||0))wheels.set(w.id,w)}
+      const draws=new Map(incoming.draws.map(d=>[d.id,d]));
+      for(const d of state.draws)if(!draws.has(d.id))draws.set(d.id,d);
+      if(wheels.size>MAX_WHEELS)throw Error('合并后轮盘超过 100 个，请先备份并整理');
+      state.deletedWheelIds=[...deleted];state.wheels=[...wheels.values()];state.draws=[...draws.values()];
+      if(!currentWheel())state.activeWheelId=state.wheels[0]?.id||null;
+      save();render();
+    }
+    async function pullCloud(silent=false){
+      if(cloudBusy||spinning||!cloudSession)return;
+      cloudBusy=true;
+      try{
+        const remote=await getCloudRow();
+        if(!remote){cloudRevision=null;if(!silent)notify('云端暂无数据');return}
+        if(remote.revision===cloudRevision)return;
+        if(!silent&&!confirm('将云端数据合并到本机？本机未上传的内容会保留。'))return;
+        mergeCloud(remote.data);cloudRevision=remote.revision;cloudConflict=false;
+        cloudLabel('已获取另一台手机的数据',false);
+        // After merging, upload union, including deletions.
+        localDirty=true;
+      }catch(e){cloudLabel('获取更新失败');if(!silent)notify(e.message)}
+      finally{cloudBusy=false}
+      if(localDirty)scheduleCloud();
+    }
+    async function pushCloud(initial=false){
+      if(cloudBusy||!cloudSession||spinning)return;
+      cloudBusy=true;
+      try{
+        let remote=await getCloudRow();
+        if(remote&&remote.revision!==cloudRevision){
+          mergeCloud(remote.data);cloudRevision=remote.revision;
+        }
+        if(!remote&&cloudRevision!==null){cloudRevision=null}
+        const revision=uid(),payload=JSON.parse(JSON.stringify(state)),sentSerial=editSerial;
+        if(remote){
+          const result=await cloudRequest('/rest/v1/spinnote_snapshots?revision=eq.'+encodeURIComponent(remote.revision),{method:'PATCH',headers:{Prefer:'return=representation'},body:JSON.stringify({revision,data:payload})});
+          if(!Array.isArray(result)||result.length!==1){cloudLabel('其他手机刚更新 · 重试中');localDirty=true;return}
+        }else{
+          if(!cloudSession.user)throw Error('登录账号无效，请重新登录');
+          await cloudRequest('/rest/v1/spinnote_snapshots',{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify({user_id:cloudSession.user,revision,data:payload})});
+        }
+        cloudRevision=revision;localDirty=editSerial!==sentSerial;cloudConflict=false;cloudLabel(localDirty?'有新修改 · 待同步':'两台手机数据已同步',false);
+      }catch(e){localDirty=true;cloudLabel('离线或同步失败 · 本机已保存');if(!initial)console.warn('Cloud sync error',e);if(!initial)notify(e.message)}
+      finally{cloudBusy=false}
+      if(localDirty&&cloudSession&&!cloudTimer)cloudTimer=setTimeout(()=>{cloudTimer=null;pushCloud()},1800);
+    }
+    function scheduleCloud(){
+      if(!cloudSession||!initDone)return;
+      clearTimeout(cloudTimer);
+      cloudTimer=setTimeout(()=>{cloudTimer=null;if(!cloudBusy)pushCloud();else scheduleCloud()},1300);
+    }
+    function startCloudPoll(){
+      clearInterval(cloudPoll);
+      cloudPoll=setInterval(async()=>{
+        if(!cloudSession||document.hidden||cloudBusy||spinning)return;
+        if(localDirty)await pushCloud();
+        else await pullCloud(true);
+      },10000);
+    }
+    function setupCloud(){
+      readCloudConfig();startCloudPoll();
+      $('cloudRegister').addEventListener('click',()=>cloudAuth(true));
+      $('cloudLogin').addEventListener('click',()=>cloudAuth(false));
+      $('cloudPull').addEventListener('click',()=>pullCloud());
+      $('cloudPush').addEventListener('click',()=>pushCloud());
+      $('cloudLogout').addEventListener('click',()=>{cloudSession=null;cloudRevision=null;cloudConflict=false;clearTimeout(cloudTimer);sessionStorage.removeItem(CLOUD_SESSION);cloudLabel('已退出');notify('已退出云同步，本机数据仍保留')});
+      document.addEventListener('visibilitychange',()=>{if(!document.hidden&&cloudSession)pullCloud(true)});
+      window.addEventListener('online',()=>{if(cloudSession)pullCloud(true)});
+    }
+    function setupEvents(){
+      $('newWheelBtn').addEventListener('click',()=>{if(spinning)return;if(state.wheels.length>=MAX_WHEELS){notify('最多支持 100 个轮盘。');return}$('newWheelName').value='';$('newWheelError').textContent='';$('wheelDialog').showModal();$('newWheelName').focus()});
+      $('cancelDialog').addEventListener('click',()=>$('wheelDialog').close());
+      $('newWheelForm').addEventListener('submit',e=>{e.preventDefault();let name=$('newWheelName').value.trim();if(!name||name.length>80){$('newWheelError').textContent='请输入 1-80 个字的名称';return}let w=newWheel(name);state.wheels.push(w);state.activeWheelId=w.id;angle=0;save();$('wheelDialog').close();render();$('entryTextarea').focus()});
+      $('wheelNameInput').addEventListener('change',()=>{let w=currentWheel();if(!w||spinning)return;let name=$('wheelNameInput').value.trim();if(!name||name.length>80){notify('轮盘名称不能为空且不能超过 80 字。');$('wheelNameInput').value=w.name;return}w.name=name;w.updatedAt=now();save();renderMenu();drawWheel()});
+      $('deleteWheelBtn').addEventListener('click',()=>{let w=currentWheel();if(!w||spinning)return;if(!confirm(`确定手动删除轮盘「${w.name}」及其 ${w.items.length} 个选项？\n已抽取的历史记录仍会保留。此操作不可撤销，建议先导出备份。`))return;state.deletedWheelIds=state.deletedWheelIds||[];state.deletedWheelIds.push(w.id);state.wheels=state.wheels.filter(x=>x.id!==w.id);state.activeWheelId=state.wheels[0]?.id||null;angle=0;save();render()});
+      $('addEntriesBtn').addEventListener('click',addEntries);$('spinBtn').addEventListener('click',spin);
+      $('historyDate').addEventListener('change',renderHistory);$('todayBtn').addEventListener('click',()=>{$('historyDate').value=today();renderHistory()});
+      $('copyBtn').addEventListener('click',copyRecords);$('csvBtn').addEventListener('click',exportCsv);$('printBtn').addEventListener('click',printRecords);
+      $('exportBtn').addEventListener('click',exportJson);$('importBtn').addEventListener('click',()=>$('importFile').click());$('importFile').addEventListener('change',e=>importJson(e.target.files[0]));
+      addEventListener('resize',()=>{if(initDone)drawWheel()});addEventListener('visibilitychange',()=>{if(!document.hidden&&initDone)renderHistory()});
+    }
+    async function init(){
+      $('historyDate').value=today();setupEvents();setupCloud();let local=readLocal(),remote=null;
+      try{db=await openDatabase();remote=await readDb()}catch(err){console.warn('IndexedDB not available',err)}
+      // Prefer whichever copy has the latest local timestamp; both are kept for redundancy.
+      state=remote&&(!local||Date.parse(remote.updatedAt)>=Date.parse(local.updatedAt))?remote:(local||initialState());
+      if(!currentWheel())state.activeWheelId=state.wheels[0]?.id||null;
+      state.deletedWheelIds=state.deletedWheelIds||[];initDone=true;render();save();if(cloudSession){cloudRevision=null;pullCloud(true);}if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('./service-worker.js').catch(err=>console.warn('Offline cache unavailable',err));
+    }
+    init().catch(err=>{console.error(err);notify('启动失败：'+err.message)})
+  })();
+  </script>
+</body>
+</html>
