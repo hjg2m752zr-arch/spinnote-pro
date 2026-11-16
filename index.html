@@ -137,7 +137,7 @@
     const now=()=>new Date().toISOString();
     function uid(){return (globalThis.crypto && crypto.randomUUID)?crypto.randomUUID():('id-'+Date.now()+'-'+Math.random().toString(36).slice(2))}
     function newWheel(name,items=[]){let time=now();return {id:uid(),name,items:items.map(text=>({id:uid(),text})),createdAt:time,updatedAt:time}}
-    function initialState(){let wheel=newWheel('今天吃什么',['粿条','鸡饭','面条','炒饭','火锅','沙拉']);return {schemaVersion:1,createdAt:now(),updatedAt:now(),activeWheelId:wheel.id,wheels:[wheel],draws:[],deletedWheelIds:[]}}
+    function initialState(){return {schemaVersion:1,createdAt:now(),updatedAt:now(),activeWheelId:null,wheels:[],draws:[],deletedWheelIds:[]}}
     function validString(s,max){return typeof s==='string' && s.trim().length>0 && s.trim().length<=max}
     function validate(data){
       if(!data || data.schemaVersion!==1 || !Array.isArray(data.wheels) || !Array.isArray(data.draws) || data.wheels.length>1000 || data.draws.length>300000) throw new Error('备份文件结构不正确或文件过大');
