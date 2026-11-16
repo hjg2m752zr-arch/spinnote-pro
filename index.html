@@ -256,7 +256,7 @@
     function cloudLabel(msg,warning=true){$('cloudStatus').textContent=msg;$('cloudStatus').classList.toggle('warn',warning)}
     function readCloudConfig(){
       try{const c=JSON.parse(localStorage.getItem(CLOUD_CFG)||'null');if(c){$('cloudUrl').value=c.url||'';$('cloudKey').value=c.key||'';cloudConfig=c}}catch{}
-      try{cloudSession=JSON.parse(sessionStorage.getItem(CLOUD_SESSION)||'null')}catch{}
+      try{cloudSession=JSON.parse(localStorage.getItem(CLOUD_SESSION)||sessionStorage.getItem(CLOUD_SESSION)||'null')}catch{}
       if(cloudSession?.access_token)cloudLabel('已连接 · 待同步',false);
     }
     function configFromInputs(){
@@ -277,10 +277,10 @@
     async function refreshCloudToken(){
       if(!cloudSession?.refresh_token)throw Error('登录已过期，请重新登录');
       const response=await fetch(cloudConfig.url+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{'apikey':cloudConfig.key,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:cloudSession.refresh_token})});
-      if(!response.ok){cloudSession=null;sessionStorage.removeItem(CLOUD_SESSION);throw Error('登录已过期，请重新登录')}
+      if(!response.ok){cloudSession=null;sessionStorage.removeItem(CLOUD_SESSION);localStorage.removeItem(CLOUD_SESSION);cloudLabel('登录已失效 · 请重新登录');throw Error('登录已过期，请重新登录')}
       setCloudSession(await response.json());
     }
-    function setCloudSession(data){cloudSession={access_token:data.access_token,refresh_token:data.refresh_token,expires_at:Math.floor(Date.now()/1000)+(data.expires_in||3600),user:data.user?.id||cloudSession?.user};sessionStorage.setItem(CLOUD_SESSION,JSON.stringify(cloudSession))}
+    function setCloudSession(data){cloudSession={access_token:data.access_token,refresh_token:data.refresh_token,expires_at:Math.floor(Date.now()/1000)+(data.expires_in||3600),user:data.user?.id||cloudSession?.user};localStorage.setItem(CLOUD_SESSION,JSON.stringify(cloudSession));sessionStorage.removeItem(CLOUD_SESSION)}
     async function cloudAuth(register){
       if(cloudBusy)return;
       try{
@@ -371,7 +371,7 @@
       $('cloudLogin').addEventListener('click',()=>cloudAuth(false));
       $('cloudPull').addEventListener('click',()=>pullCloud());
       $('cloudPush').addEventListener('click',()=>pushCloud());
-      $('cloudLogout').addEventListener('click',()=>{cloudSession=null;cloudRevision=null;cloudConflict=false;clearTimeout(cloudTimer);sessionStorage.removeItem(CLOUD_SESSION);cloudLabel('已退出');notify('已退出云同步，本机数据仍保留')});
+      $('cloudLogout').addEventListener('click',()=>{cloudSession=null;cloudRevision=null;cloudConflict=false;clearTimeout(cloudTimer);sessionStorage.removeItem(CLOUD_SESSION);localStorage.removeItem(CLOUD_SESSION);cloudLabel('已退出');notify('已退出云同步，本机数据仍保留')});
       document.addEventListener('visibilitychange',()=>{if(!document.hidden&&cloudSession)pullCloud(true)});
       window.addEventListener('online',()=>{if(cloudSession)pullCloud(true)});
     }
@@ -393,7 +393,7 @@
       // Prefer whichever copy has the latest local timestamp; both are kept for redundancy.
       state=remote&&(!local||Date.parse(remote.updatedAt)>=Date.parse(local.updatedAt))?remote:(local||initialState());
       if(!currentWheel())state.activeWheelId=state.wheels[0]?.id||null;
-      state.deletedWheelIds=state.deletedWheelIds||[];initDone=true;render();save();if(cloudSession){cloudRevision=null;pullCloud(true);}if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('./service-worker.js').catch(err=>console.warn('Offline cache unavailable',err));
+      state.deletedWheelIds=state.deletedWheelIds||[];initDone=true;render();save();if(cloudSession){cloudRevision=null;cloudLabel('正在恢复云端连接…',false);pullCloud(true);}if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('./service-worker.js').catch(err=>console.warn('Offline cache unavailable',err));
     }
     init().catch(err=>{console.error(err);notify('启动失败：'+err.message)})
   })();
